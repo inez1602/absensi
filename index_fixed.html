@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Absensi</title>
+
+<style>
+    body { 
+        font-family: Arial, sans-serif; 
+        padding: 20px; 
+        background: #ffe6f2; 
+    }
+    .container { max-width: 450px; margin: auto; }
+    input, select, button {
+        width: 100%; padding: 10px; margin: 8px 0;
+        border-radius: 6px; border: 1px solid #d48cb3;
+    }
+    button {
+        background: #ff4da6; 
+        color: white; 
+        border: none;
+        font-weight: bold; 
+        cursor: pointer;
+    }
+    button:hover { background: #e60073; }
+    .card {
+        background: #fff0f6;
+        padding: 15px;
+        border-radius: 10px;
+        margin-top: 20px;
+        border: 1px solid #ffb3d9;
+    }
+    table { 
+        width: 100%; 
+        border-collapse: collapse; 
+        margin-top: 20px; 
+        background: white;
+    }
+    th, td {
+        border: 1px solid #ffb3d9; 
+        padding: 8px;
+        font-size: 14px; 
+    }
+    th { background: #ffccdd; }
+    #notif {
+        margin-top: 10px;
+        font-weight: bold;
+        color: #d4006e;
+        text-align: center;
+    }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- Judul aplikasi -->
+    <h2 id="appTitle">Attendance Application (Realtime)</h2>
+
+    <!-- Edit judul -->
+    <div class="card">
+        <label>Edit Judul Aplikasi:</label>
+        <input id="editTitle" placeholder="Masukkan judul baru...">
+        <button onclick="ubahJudul()">Ubah Judul</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="loginPage">
+        <div class="card">
+            <h3>Login</h3>
+            <input type="text" id="username" placeholder="Username">
+            <input type="password" id="password" placeholder="Password">
+            <button onclick="login()">Konfirmasi</button>
+        </div>
+    </div>
+
+    <!-- FORM ABSENSI -->
+    <div id="formPage" style="display:none;">
+        <div class="card">
+            <h3>Form Absensi</h3>
+
+            <input id="nama" placeholder="Nama Siswa">
+
+            <label>Kelas:</label>
+            <select id="kelas">
+                <optgroup label="Kelas X">
+                    <option>X-1</option><option>X-2</option><option>X-3</option>
+                    <option>X-4</option><option>X-5</option><option>X-6</option>
+                    <option>X-7</option><option>X-8</option>
+                </optgroup>
+
+                <optgroup label="Kelas XI">
+                    <option>XI-1</option><option>XI-2</option><option>XI-3</option>
+                    <option>XI-4</option><option>XI-5</option><option>XI-6</option>
+                </optgroup>
+
+                <optgroup label="Kelas XII">
+                    <option>XII-1</option><option>XII-2</option><option>XII-3</option>
+                    <option>XII-4</option><option>XII-5</option><option>XII-6</option>
+                    <option>XII-7</option>
+                </optgroup>
+            </select>
+
+            <label>Tanggal:</label>
+            <input id="tanggal" type="date">
+
+            <label>Keterangan:</label>
+            <select id="keterangan">
+                <option value="Hadir">Hadir</option>
+                <option value="Sakit">Sakit</option>
+                <option value="Izin">Izin</option>
+            </select>
+
+            <button onclick="kirimData()">Konfirmasi</button>
+            <div id="notif"></div>
+        </div>
+
+        <h3 style="margin-top:30px;">Rekap Absensi</h3>
+        <div id="rekapContainer"></div>
+    </div>
+
+</div>
+
+<script>
+    // ===============================
+    // KONFIGURASI
+    // ===============================
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzcfDzGiPuXcDvhqYPXLQEvBSzXx9Pd7tpinRuCrq-_32SJQjvGUAjtvQ3S8XSB6_Hm5w/exec";
+    const SHEET_ID = "1FMOTE5yOI-9nnqmAb33hwL6SZyHhnXCN2e5sQr_7WRQ";
+
+    // ===============================
+    // Ubah Judul
+    // ===============================
+    function ubahJudul() {
+        const newTitle = document.getElementById("editTitle").value;
+        if (newTitle.trim() !== "") {
+            document.getElementById("appTitle").innerText = newTitle;
+        }
+    }
+
+    // ===============================
+    // LOGIN
+    // ===============================
+    function login() {
+        const user = document.getElementById("username").value;
+        const pass = document.getElementById("password").value;
+
+        if (user === "inez" && pass === "inez123") {
+            document.getElementById("loginPage").style.display = "none";
+            document.getElementById("formPage").style.display = "block";
+            muatRekap();
+        } else {
+            alert("Username atau password salah!");
+        }
+    }
+
+    // ===============================
+    // KIRIM DATA
+    // ===============================
+    function kirimData() {
+
+        const waktuSekarang = new Date().toLocaleTimeString("id-ID");
+        const nama = document.getElementById("nama").value;
+        const kelas = document.getElementById("kelas").value;
+        const tanggal = document.getElementById("tanggal").value;
+        const ket = document.getElementById("keterangan").value;
+
+        if (!nama || !kelas || !tanggal) {
+            alert("Lengkapi semua data!");
+            return;
+        }
+
+        const data = {
+            waktu: waktuSekarang,
+            nama: nama,
+            kelas: kelas,
+            tanggal: tanggal,
+            keterangan: ket
+        };
+
+        fetch(SCRIPT_URL, {
+            method: "POST",
+            body: JSON.stringify(data)
+        })
+        .then(res => res.text())
+        .then(() => {
+            document.getElementById("notif").innerText = `${nama} ${ket.toLowerCase()}`;
+            muatRekap();
+        })
+        .catch(() => alert("Gagal mengirim data"));
+    }
+
+    // ===============================
+    // REKAP REALTIME
+    // ===============================
+    function muatRekap() {
+        const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
+
+        fetch(url)
+        .then(res => res.text())
+        .then(raw => {
+            const json = JSON.parse(raw.substr(47).slice(0, -2));
+
+            let table = `
+            <table>
+                <tr>
+                    <th>WAKTU</th>
+                    <th>NAMA</th>
+                    <th>KELAS</th>
+                    <th>TANGGAL</th>
+                    <th>KET</th>
+                </tr>`;
+
+            json.table.rows.forEach(r => {
+                const c = r.c;
+                table += `
+                <tr>
+                    <td>${c[0]?.v || ""}</td>
+                    <td>${c[1]?.v || ""}</td>
+                    <td>${c[2]?.v || ""}</td>
+                    <td>${c[3]?.v || ""}</td>
+                    <td>${c[4]?.v || ""}</td>
+                </tr>`;
+            });
+
+            table += "</table>";
+            document.getElementById("rekapContainer").innerHTML = table;
+        });
+    }
+</script>
+
+</body>
+</html>
